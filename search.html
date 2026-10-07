@@ -1,0 +1,7 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Search - Inimai Matrimony</title><link rel="stylesheet" href="style.css"><script src="app.js"></script></head><body>
+<main class="wrap"><h2>Search profiles</h2>
+<form id="f" class="box f2"><div><label>Looking for</label><select name="g"><option value="">Any</option><option>Bride</option><option>Groom</option></select></div><div><label>Age from</label><input name="min" type="number" value="18"></div><div><label>Age to</label><input name="max" type="number" value="60"></div><div><label>Religion</label><select name="r"><option value="">Any</option><option>Hindu</option><option>Christian</option><option>Muslim</option></select></div><div><label>Community</label><select name="c" id="c"></select></div><div><button class="btn" style="width:100%">Search</button></div></form>
+<p id="n" class="mute"></p><div class="grid" id="r"></div></main>
+<script>let M;$('#c').innerHTML=opts(CASTES,'Any');
+async function run(){const q=new URLSearchParams(new FormData($('#f'))),l=await api('profiles?'+q);$('#n').textContent=l.length+' profiles found';$('#r').innerHTML=l.length?l.map(p=>card(p,M)).join(''):'<div class="box">No profiles match. Widen the age range or choose Any.</div>'}
+layout().then(m=>{M=m;const u=new URLSearchParams(location.search);u.forEach((v,k)=>{if($('#f')[k])$('#f')[k].value=v});run()});$('#f').onsubmit=e=>{e.preventDefault();run()}</script></body></html>

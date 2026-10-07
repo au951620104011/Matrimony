@@ -1,0 +1,9 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Inimai Matrimony</title><link rel="stylesheet" href="style.css"><script src="app.js"></script></head><body>
+<main class="wrap"><div class="hero"><div><h1>Good people. Happy marriages.</h1><p>Inimai Matrimony helps families across Tamil Nadu find a life partner they can trust.</p>
+<form class="box f2" action="search.html"><div><label>Looking for</label><select name="g"><option>Bride</option><option>Groom</option></select></div><div><label>Age from</label><input name="min" type="number" value="22"></div><div><label>Age to</label><input name="max" type="number" value="32"></div><div><button class="btn" style="width:100%">Find matches</button></div></form></div>
+<img src="logo.png" alt="Inimai Matrimony logo"></div>
+<h2 style="margin-top:44px">What you get when you register</h2>
+<div class="grid w"><div class="box top"><h3>Your own profile</h3><p>Families can find you in search once our team approves your profile.</p></div><div class="box top"><h3>Send interest</h3><p>Tell a match you like their profile in one tap.</p></div><div class="box top"><h3>See who liked you</h3><p>Your account shows everyone who sent you interest.</p></div><div class="box top"><h3>Matches picked for you</h3><p>We suggest profiles close to your age, every time you log in.</p></div><div class="box top"><h3>Phone numbers</h3><p>Paid members see contact numbers and can call families directly.</p></div></div>
+<h2 style="margin-top:44px">Recently joined</h2><div class="grid" id="r"></div>
+<div class="band"><h2>Your Inimai story starts today</h2><p>Registration is free.</p><a class="btn" style="background:var(--gold);color:var(--ink)" href="register.html">Register free</a></div></main>
+<script>layout().then(async m=>{const l=await api('profiles');$('#r').innerHTML=l.slice(-6).reverse().map(p=>card(p,m)).join('')})</script></body></html>
