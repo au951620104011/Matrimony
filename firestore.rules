@@ -1,0 +1,45 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // CHANGE this to the same admin email you put in firebase-config.js (lowercase)
+    function isAdmin(){ return request.auth != null && request.auth.token.email == 'admin@example.com'; }
+    function signed(){ return request.auth != null; }
+    function isPaid(){ let m = /databases/$(database)/documents/members/$(request.auth.uid); return exists(m) && get(m).data.plan != 'Free'; }
+    function acc(a,b){ let p = /databases/$(database)/documents/interests/$(a + '_' + b); return exists(p) && get(p).data.status == 'accepted'; }
+
+    match /profiles/{id} {
+      allow read: if (signed() && (request.auth.uid == id || isAdmin())) || resource.data.status == 'approved';
+      allow create: if signed() && ((request.auth.uid == id && request.resource.data.status == 'pending' && request.resource.data.by == 'self') || isAdmin());
+      allow update, delete: if isAdmin();
+    }
+    match /members/{id} {
+      allow read: if signed() && (request.auth.uid == id || isAdmin());
+      allow create: if signed() && request.auth.uid == id && request.resource.data.plan == 'Free';
+      allow update, delete: if isAdmin();
+    }
+    // phone numbers: owner, admin, paid members, or people with an accepted interest
+    match /phones/{id} {
+      allow read: if signed() && (request.auth.uid == id || isAdmin() || isPaid() || acc(request.auth.uid,id) || acc(id,request.auth.uid));
+      allow create, update: if signed() && (request.auth.uid == id || isAdmin());
+      allow delete: if isAdmin();
+    }
+    // emails: only used to send the "interest" notification
+    match /emails/{id} {
+      allow read: if signed() && (request.auth.uid == id || isAdmin()
+        || exists(/databases/$(database)/documents/interests/$(request.auth.uid + '_' + id))
+        || exists(/databases/$(database)/documents/interests/$(id + '_' + request.auth.uid)));
+      allow create, update: if signed() && (request.auth.uid == id || isAdmin());
+      allow delete: if isAdmin();
+    }
+    match /interests/{iid} {
+      allow create: if signed() && request.resource.data.from == request.auth.uid
+        && iid == request.auth.uid + '_' + request.resource.data.to
+        && request.resource.data.status == 'pending'
+        && get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.status == 'approved';
+      allow read: if signed() && (resource.data.from == request.auth.uid || resource.data.to == request.auth.uid || isAdmin());
+      allow update: if signed() && (resource.data.to == request.auth.uid || isAdmin())
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
+      allow delete: if isAdmin();
+    }
+  }
+}
