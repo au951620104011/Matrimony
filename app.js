@@ -18,7 +18,7 @@ function seed(){const d={users:[],profiles:[],interests:[]};
 wr(DBK,d);return d}
 let db=rd(DBK)||seed();const save=()=>wr(DBK,db);
 const F=['name','gender','age','religion','caste','job','city','phone'];
-const mk=(b,x)=>{const p={id:uid(),...Object.fromEntries(F.map(f=>[f,String(b[f]||'').trim().slice(0,60)])),...x};p.age=+p.age;return p};
+const mk=(b,x)=>{const p={id:uid(),...Object.fromEntries(F.map(f=>[f,String(b[f]||'').replace(/[<>"&]/g,'').trim().slice(0,60)])),...x};p.age=+p.age;return p};
 const pub=(p,paid)=>{const{phone,userId,...r}=p;return paid?{...r,phone}:r};
 
 /* api(route, data) works like a server, but runs inside the browser */
@@ -30,7 +30,7 @@ async function api(u,b){
  const conn=id=>!!mine&&db.interests.some(i=>i.status==='accepted'&&((i.from===mine.id&&i.to===id)||(i.to===mine.id&&i.from===id)));
  const pv=x=>pub(x,paid||conn(x.id)); // phone is visible for paid members or accepted interests
  if(p==='register'){
-  const email=String(b.email||'').trim().toLowerCase();
+  const email=String(b.email||'').replace(/[<>"'&\s]/g,'').toLowerCase();
   if(!email||String(b.password||'').length<6||!b.name||!b.phone||!b.age)return{error:'Please fill all fields. Password needs 6+ characters.'};
   if(db.users.some(x=>x.email===email))return{error:'This email is already registered. Please log in.'};
   const u={id:uid(),email,pw:hs(b.password),plan:'Free'};
@@ -61,9 +61,11 @@ async function api(u,b){
   if(i){i.status=b.status==='accepted'?'accepted':'declined';save()}
   return{ok:1}}
  if(p==='admin/login'){if(b.password!==ADMIN_PASS)return{error:'Wrong password.'};return login({admin:1})}
+ if(p==='admin/logout'){wr(SK,{userId:s.userId});return{ok:1}}
  if(p.startsWith('admin/')){
   if(!s.admin)return{error:'Admin login required.'};
   if(p==='admin/list')return db.profiles.map(x=>{const u=db.users.find(y=>y.id===x.userId)||{};return{...x,email:u.email,plan:u.plan}});
+  if(p==='admin/stats')return{members:db.users.length,interests:db.interests.length,accepted:db.interests.filter(i=>i.status==='accepted').length};
   if(p==='admin/add'){db.profiles.push(mk(b,{userId:null,status:'approved',by:'admin'}));save();return{ok:1}}
   if(p==='admin/approve'){const x=db.profiles.find(y=>y.id===b.id);if(x)x.status='approved';save();return{ok:1}}
   if(p==='admin/delete'){db.profiles=db.profiles.filter(y=>y.id!==b.id);save();return{ok:1}}
@@ -74,7 +76,7 @@ async function api(u,b){
 async function layout(){
  const m=await api('me'),cur=location.pathname.split('/').pop()||'index.html',P=[['index.html','Home'],['search.html','Search'],['plans.html','Plans'],['contact.html','Contact']];
  document.body.insertAdjacentHTML('afterbegin',`<header><div class="bar"><a href="index.html"><img src="logo.png" alt="Inimai Matrimony"></a><button class="mb" aria-label="Menu" aria-expanded="false">☰</button><nav id="nv">${P.map(p=>`<a href="${p[0]}" class="${cur===p[0]?'on':''}">${p[1]}</a>`).join('')}${m.guest?'<a href="login.html">Log in</a><a class="cta" href="register.html">Register free</a>':'<a class="cta" href="dashboard.html">My account</a>'}</nav></div></header>`);
- document.body.insertAdjacentHTML('beforeend',`<footer><div class="fin"><div><a href="index.html" class="fl"><img src="logo.png" alt="Inimai Matrimony"></a><p>Good people. Happy marriages.<br>Helping families across Tamil Nadu find a life partner they can trust.</p></div><div><h4>Quick links</h4><a href="index.html">Home</a><a href="search.html">Search</a><a href="plans.html">Plans</a><a href="contact.html">Contact</a><a href="register.html">Register free</a></div><div><h4>Contact us</h4><p>📍 12, Main Road, Abc Nagar,<br>Abc Town, Tamil Nadu – 600000</p><p>📞 <a href="tel:+919999999999">+91 99999 99999</a></p><p>✉️ <a href="mailto:abc@inimaimatrimony.com">abc@inimaimatrimony.com</a></p></div></div><div class="fb">© 2026 Inimai Matrimony. All rights reserved. · <a href="admin.html">Admin</a></div></footer>`);
+ document.body.insertAdjacentHTML('beforeend',`<footer><div class="fin"><div><a href="index.html" class="fl"><img src="logo.png" alt="Inimai Matrimony"></a><p><b>Good people. Happy marriages.</b></p><p class="sm">Helping families across Tamil Nadu find a life partner they can trust.</p></div><div><h4>Quick links</h4><div class="ql"><a href="index.html">Home</a><a href="search.html">Search</a><a href="plans.html">Plans</a><a href="contact.html">Contact</a><a href="register.html">Register free</a></div></div><div><h4>Contact us</h4><p>📍 12, Main Road, Abc Nagar, Abc Town, Tamil Nadu – 600000</p><p>📞 <a href="tel:+919999999999">+91 99999 99999</a></p><p>✉️ <a href="mailto:abc@inimaimatrimony.com">abc@inimaimatrimony.com</a></p><p>🕘 Open daily, 9 am – 7 pm</p></div></div><div class="fb">© 2026 Inimai Matrimony. All rights reserved.</div></footer>`);
  return m}
 function card(p,m){
  const sent=m&&m.sent&&m.sent.includes(p.id),btn=m&&m.guest?`<a class="btn g" href="login.html">Log in to send interest</a>`:`<button class="btn g int" data-id="${p.id}" ${sent?'disabled':''}>${sent?'Interest sent':'Send interest'}</button>`;
