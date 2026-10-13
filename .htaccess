@@ -1,0 +1,4 @@
+Options -Indexes
+<FilesMatch "^(config|inc)\.php$">
+Require all denied
+</FilesMatch>

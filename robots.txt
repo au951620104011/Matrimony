@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /dashboard.php
+Disallow: /pay.php
+Disallow: /profile.php
+Sitemap: http://localhost/inimai/sitemap.xml
